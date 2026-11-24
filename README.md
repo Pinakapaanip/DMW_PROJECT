@@ -122,10 +122,36 @@ backend/
 └── main.py
 ```
 
-This is a **module skeleton**. Every Python file listed above exists,
-and each one is empty. `backend/app/database/` has no `__init__.py` yet,
-so it is not an importable package. There is no frontend,
-`requirements.txt`, `.env.example`, test suite, or `docs/` folder.
+This describes the repository state when inspected on 23 November 2026:
+every Python file listed above existed and was empty, and
+`backend/app/database/` had no `__init__.py`. A React/Vite frontend has
+since been added under `frontend/`; the backend remains a module
+skeleton, and there is still no backend requirements file, test suite,
+or `docs/` folder.
+
+### Frontend baseline added for Roy
+
+The current frontend provides an authenticated React app shell, login
+and registration, profile editing and member follows, a community feed
+with post creation/comments/upvotes, and a personal library with paper
+save/remove and collection create/list. It uses the proposed routes
+listed in this plan and surfaces API loading, empty, and error states.
+The API response payloads still need to be confirmed with the backend
+owners before end-to-end integration can be considered complete.
+
+Run the frontend from the repository root:
+
+``` text
+cd frontend
+npm install
+copy .env.example .env
+npm run dev
+```
+
+Set `VITE_API_BASE_URL` in `frontend/.env` to the FastAPI origin when it
+differs from `http://localhost:8000`. Private notes and assigning papers
+to collections are not wired yet: the current API contract does not
+define routes or payloads for those operations.
 
 An empty file is not evidence that the database can be initialized,
 that routes are registered, that APIs return correct data, or that
