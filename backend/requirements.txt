@@ -18,4 +18,4 @@ duckdb
 pandas
 pyarrow
 pypdf
-psycopg2-binary
+pg8000
