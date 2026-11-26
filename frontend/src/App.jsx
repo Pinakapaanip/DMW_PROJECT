@@ -3,6 +3,7 @@ import {
   Link,
   NavLink,
   Navigate,
+  Outlet,
   Route,
   Routes,
   useLocation,
@@ -82,12 +83,18 @@ function App() {
     setAuthError("");
   }, []);
 
-  const signOut = useCallback(() => {
-    window.sessionStorage.removeItem("commons_token");
-    setToken(null);
-    setUser(null);
-    setAuthStatus("signed-out");
-  }, []);
+  const signOut = useCallback(async () => {
+    try {
+      if (token) {
+        await apiRequest("/auth/logout", { method: "POST", token });
+      }
+    } finally {
+      window.sessionStorage.removeItem("commons_token");
+      setToken(null);
+      setUser(null);
+      setAuthStatus("signed-out");
+    }
+  }, [token]);
 
   const auth = useMemo(() => ({
     token, user, authStatus, authError, signIn, signOut,
@@ -102,6 +109,7 @@ function App() {
         <Route element={<AppShell auth={auth} />}>
           <Route index element={<Navigate to="/feed" replace />} />
           <Route path="/feed" element={<FeedPage auth={auth} />} />
+          <Route path="/papers" element={<PapersPage auth={auth} />} />
           <Route path="/members" element={<MembersPage auth={auth} />} />
           <Route path="/profile" element={<ProfilePage auth={auth} />} />
           <Route path="/profile/:userId" element={<ProfilePage auth={auth} />} />
@@ -128,6 +136,7 @@ function AuthPage({ mode, auth, initialError = "" }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isRegister = mode === "register";
+  const localDemoEnabled = import.meta.env.DEV && !isRegister;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(initialError);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "student" });
@@ -137,10 +146,27 @@ function AuthPage({ mode, auth, initialError = "" }) {
     setBusy(true);
     setError("");
     try {
+      if (localDemoEnabled) {
+        const result = await apiRequest("/auth/dev-login", { method: "POST" });
+        const accessToken = result?.access_token ?? result?.token;
+        if (!accessToken) throw new Error("The demo login response did not include an access token.");
+        auth.signIn(accessToken, result.user);
+        const destination = location.state?.from?.pathname || "/feed";
+        navigate(destination, { replace: true });
+        return;
+      }
+
       if (isRegister) {
         const registered = await apiRequest("/auth/register", {
           method: "POST",
-          body: { name: form.name.trim(), email: form.email.trim(), password: form.password, role: form.role },
+          body: {
+            username: form.email.trim().split("@")[0].toLowerCase()
+              .replace(/[^a-z0-9_.-]/g, "").slice(0, 40),
+            full_name: form.name.trim(),
+            email: form.email.trim(),
+            password: form.password,
+            role: form.role,
+          },
         });
         const returnedToken = registered?.access_token ?? registered?.token;
         if (returnedToken) {
@@ -208,11 +234,12 @@ function AuthPage({ mode, auth, initialError = "" }) {
               </>
             )}
             <label className="field-label">University email
-              <input type="email" autoComplete="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@chanakyauniversity.edu.in" />
+              <input type={localDemoEnabled ? "text" : "email"} autoComplete="email" required={!localDemoEnabled} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={localDemoEnabled ? "Any value (not checked in demo mode)" : "you@chanakyauniversity.edu.in"} />
             </label>
             <label className="field-label">Password
-              <input type="password" autoComplete={isRegister ? "new-password" : "current-password"} minLength={8} required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 8 characters" />
+              <input type="password" autoComplete={isRegister ? "new-password" : "current-password"} minLength={localDemoEnabled ? undefined : 8} required={!localDemoEnabled} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={localDemoEnabled ? "Any value (not checked in demo mode)" : "At least 8 characters"} />
             </label>
+            {localDemoEnabled && <p className="muted">Local demo mode is enabled. These values are not checked.</p>}
             {error && <ErrorBanner message={error} />}
             <button type="submit" className="button button-primary button-wide" disabled={busy}>
               {busy ? "One moment…" : isRegister ? "Create account" : "Sign in"}
@@ -236,6 +263,7 @@ function AppShell({ auth }) {
   const initials = name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
   const links = [
     { to: "/feed", icon: "home", label: "Research feed" },
+    { to: "/papers", icon: "search", label: "Research papers" },
     { to: "/members", icon: "users", label: "People" },
     { to: "/library", icon: "book", label: "My library" },
   ];
@@ -265,7 +293,13 @@ function AppShell({ auth }) {
             <span className="account-copy"><strong>{name}</strong><small>{auth.user?.role || "Community member"}</small></span>
             <Icon name="chevron" size={16} />
           </Link>
-          <button type="button" className="logout-button" onClick={auth.signOut}><Icon name="logout" size={16} /> Sign out</button>
+          <button
+            type="button"
+            className="logout-button"
+            onClick={() => auth.signOut().catch((error) => console.error("Could not revoke the session token:", error))}
+          >
+            <Icon name="logout" size={16} /> Sign out
+          </button>
         </div>
       </aside>
       <div className="main-column">
@@ -340,6 +374,173 @@ function FeedPage({ auth }) {
           <div className="rail-note"><span className="note-mark">“</span><p>Big discoveries often begin as small conversations.</p><span>THE COMMONS PRINCIPLE</span></div>
         </aside>
       </div>
+    </>
+  );
+}
+
+function PapersPage({ auth }) {
+  const [papers, setPapers] = useState([]);
+  const [results, setResults] = useState(null);
+  const [status, setStatus] = useState("loading");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [query, setQuery] = useState("");
+  const [source, setSource] = useState("all");
+  const [busy, setBusy] = useState("");
+  const [refresh, setRefresh] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    setStatus("loading");
+    apiRequest("/papers?limit=100", { token: auth.token })
+      .then((response) => {
+        if (active) {
+          setPapers(readList(response, "papers"));
+          setStatus("ready");
+        }
+      })
+      .catch((requestError) => {
+        if (active) {
+          setError(errorMessage(requestError));
+          setStatus("error");
+        }
+      });
+    return () => { active = false; };
+  }, [auth.token, refresh]);
+
+  async function searchStoredPapers(event) {
+    event.preventDefault();
+    const searchTerm = query.trim();
+    if (!searchTerm) return;
+    setBusy("search");
+    setError("");
+    setNotice("");
+    try {
+      const params = new URLSearchParams({ query: searchTerm, mode: "keyword", limit: "50" });
+      const response = await apiRequest(`/search?${params.toString()}`, { token: auth.token });
+      setResults(readList(response, "results"));
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function importPublicPapers() {
+    const searchTerm = query.trim();
+    if (!searchTerm) {
+      setError("Enter a topic or phrase to search public research sources.");
+      return;
+    }
+    setBusy("import");
+    setError("");
+    setNotice("");
+    try {
+      const response = await apiRequest("/ingestion/run", {
+        method: "POST",
+        token: auth.token,
+        body: { query: searchTerm, source, limit: 25, page_size: 25 },
+      });
+      setResults(null);
+      const fetchedCount = Object.values(response.records_fetched ?? {})
+        .reduce((total, count) => total + Number(count || 0), 0);
+      setNotice(`${fetchedCount} records fetched; ${response.inserted ?? 0} new papers added.`);
+      setRefresh((value) => value + 1);
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function scanLocalPdfs() {
+    setBusy("scan");
+    setError("");
+    setNotice("");
+    try {
+      const response = await apiRequest("/ingestion/local-pdfs", {
+        method: "POST",
+        token: auth.token,
+      });
+      setResults(null);
+      setNotice(`${response.files_ingested ?? 0} valid local PDFs scanned; ${response.papers_normalized ?? 0} papers processed.`);
+      setRefresh((value) => value + 1);
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    } finally {
+      setBusy("");
+    }
+  }
+
+  const visiblePapers = results ?? papers;
+  const heading = results === null ? "Papers in the Commons" : "Search results";
+
+  return (
+    <>
+      <PageHeading
+        kicker="RESEARCH DISCOVERY"
+        title={<>Find work worth<br /><em>building on.</em></>}
+        description="Search papers already in the Commons, import records from public research sources, or scan your local PDFs."
+        action={<button type="button" className="button button-outline" onClick={scanLocalPdfs} disabled={Boolean(busy)}>{busy === "scan" ? "Scanning…" : "Scan local PDFs"}</button>}
+      />
+      {error && <ErrorBanner message={error} />}
+      {notice && <div className="success-banner"><span className="status-dot" />{notice}<button type="button" onClick={() => setNotice("")} aria-label="Dismiss">×</button></div>}
+      <section className="library-tools">
+        <form className="add-paper-form" onSubmit={searchStoredPapers}>
+          <div className="tool-icon"><Icon name="search" size={19} /></div>
+          <div className="tool-copy"><strong>Search stored papers</strong><span>Find papers already imported into the Commons.</span></div>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Research search query" placeholder="Search a topic, title, or author…" />
+          <button type="submit" className="button button-primary" disabled={Boolean(busy) || !query.trim()}>{busy === "search" ? "Searching…" : "Search papers"}</button>
+          <label className="tool-copy">Public source
+            <select value={source} onChange={(event) => setSource(event.target.value)} disabled={Boolean(busy)}>
+              <option value="all">All sources</option>
+              <option value="arxiv">arXiv</option>
+              <option value="openalex">OpenAlex</option>
+            </select>
+          </label>
+          <button type="button" className="button button-outline" onClick={importPublicPapers} disabled={Boolean(busy) || !query.trim()}>{busy === "import" ? "Importing…" : "Find and import public papers"}</button>
+        </form>
+      </section>
+      <section className="library-section">
+        <div className="section-title-row">
+          <div><p className="eyebrow">RESEARCH LIBRARY</p><h2>{heading} <span className="title-count">{visiblePapers.length}</span></h2></div>
+          {results !== null && <button type="button" className="button button-outline" onClick={() => setResults(null)}>Show all papers</button>}
+        </div>
+        {status === "loading" && <LoadingCard label="Loading research papers…" />}
+        {status === "error" && <ErrorPanel message={error} onRetry={() => setRefresh((value) => value + 1)} />}
+        {status === "ready" && visiblePapers.length === 0 && (
+          <EmptyPanel
+            icon="book"
+            title={results === null ? "No papers have been added yet." : "No matching papers found."}
+            body={results === null
+              ? "Scan PDFs in backend/data/research_papers or enter a topic above to import real papers from arXiv or OpenAlex."
+              : "Try another search, import papers from a public source, or scan your local PDF folder."}
+          />
+        )}
+        {status === "ready" && visiblePapers.length > 0 && (
+          <div className="paper-list">
+            {visiblePapers.map((paper, index) => {
+              const id = recordId(paper);
+              const authors = Array.isArray(paper.authors)
+                ? paper.authors.map((author) => typeof author === "string" ? author : author.name || author.display_name || "").filter(Boolean).join(", ")
+                : paper.authors || paper.author || "Authors not listed";
+              const year = paper.publication_year || paper.publication_date?.slice(0, 4);
+              return (
+                <article className="paper-row" key={id ?? index}>
+                  <div className="paper-cover"><Icon name="book" size={22} /><span>{year || "RESEARCH"}</span></div>
+                  <div className="paper-info">
+                    <h3>{paper.title || paper.paper_title || "Untitled paper"}</h3>
+                    <p>{authors}{year ? ` · ${year}` : ""}</p>
+                    {paper.abstract && <p>{paper.abstract}</p>}
+                    <span className="paper-source">{paper.source || paper.journal || paper.doi || "Research paper"}</span>
+                  </div>
+                  {paper.landing_page_url && <a className="text-link" href={paper.landing_page_url} target="_blank" rel="noreferrer">Open paper <Icon name="arrow" size={14} /></a>}
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </>
   );
 }

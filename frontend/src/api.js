@@ -1,5 +1,6 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000")
   .replace(/\/+$/, "");
+const API_PREFIX = "/api/v1";
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -12,7 +13,7 @@ export class ApiError extends Error {
 export async function apiRequest(path, { method = "GET", body, token } = {}) {
   let response;
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await fetch(`${API_BASE_URL}${API_PREFIX}${path.startsWith("/") ? path : `/${path}`}`, {
       method,
       headers: {
         Accept: "application/json",

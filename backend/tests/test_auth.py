@@ -3,12 +3,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.database.connection import Base, get_db
-from main import app
+from app.database.connection import Base, get_db, settings
+import main
+
+app = main.app
 
 
 @pytest.fixture()
-def client(tmp_path):
+def client(tmp_path, monkeypatch):
     db_path = tmp_path / "test_auth.db"
     test_engine = create_engine(
         f"sqlite:///{db_path}",
@@ -20,6 +22,7 @@ def client(tmp_path):
         autocommit=False,
     )
     Base.metadata.create_all(bind=test_engine)
+    monkeypatch.setattr(main, "engine", test_engine)
 
     def override_get_db():
         db = TestingSessionLocal()
@@ -29,7 +32,7 @@ def client(tmp_path):
             db.close()
 
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
+    with TestClient(app, client=("127.0.0.1", 50000)) as test_client:
         yield test_client
     app.dependency_overrides.clear()
     test_engine.dispose()
@@ -127,3 +130,22 @@ def test_invalid_credentials_and_unauthorized(client):
         ).status_code
         == 401
     )
+
+
+def test_dev_login_is_disabled_by_default_and_local_only(client, monkeypatch):
+    path = "/api/v1/auth/dev-login"
+    assert client.post(path).status_code == 404
+
+    monkeypatch.setattr(settings, "allow_dev_login", True)
+    response = client.post(path)
+    assert response.status_code == 200, response.text
+    token = response.json()["access_token"]
+    profile = client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert profile.status_code == 200
+    assert profile.json()["email"] == "local-demo@example.com"
+
+    remote_client = TestClient(app, client=("192.0.2.1", 50000))
+    assert remote_client.post(path).status_code == 403

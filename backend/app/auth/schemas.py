@@ -1,4 +1,6 @@
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
@@ -20,6 +22,7 @@ class RegisterIn(BaseModel):
         default="",
         max_length=120
     )
+    role: Literal["member", "student", "faculty", "researcher"] = "member"
 
 
 class LoginIn(BaseModel):

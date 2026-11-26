@@ -8,6 +8,15 @@ from app.database.connection import Base, engine
 from app.database import models
 
 from app.auth.routes import router as auth_router
+from app.analytics.routes import router as analytics_router
+from app.assistant.routes import router as assistant_router
+from app.ingestion.routes import router as ingestion_router
+from app.library.routes import router as library_router
+from app.posts.routes import router as posts_router
+from app.profiles.routes import router as profiles_router
+from app.recommendations.routes import router as recommendations_router
+from app.search.routes import router as search_router
+from app.trends.routes import router as trends_router
 
 
 @asynccontextmanager
@@ -38,6 +47,15 @@ app.add_middleware(
 
 
 app.include_router(auth_router)
+app.include_router(profiles_router)
+app.include_router(posts_router)
+app.include_router(library_router)
+app.include_router(ingestion_router)
+app.include_router(search_router)
+app.include_router(recommendations_router)
+app.include_router(trends_router)
+app.include_router(assistant_router)
+app.include_router(analytics_router)
 
 
 @app.get("/health")

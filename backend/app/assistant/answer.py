@@ -453,6 +453,27 @@ def generate_answer(
             "grounded": False,
         }
 
+    if not retrieval_result.get("success"):
+        if retrieval_mode == "hybrid":
+            retrieval_result = retrieve_evidence(
+                papers=papers,
+                query=question,
+                limit=top_k,
+                mode="keyword",
+                max_passages_per_paper=max_passages_per_paper,
+            )
+        if not retrieval_result.get("success"):
+            return {
+                "success": False,
+                "message": (
+                    "Research retrieval failed: "
+                    + str(retrieval_result.get("message", "Unknown retrieval error."))
+                ),
+                "answer": "",
+                "sources": [],
+                "grounded": False,
+            }
+
     evidence = retrieval_result.get("evidence", [])
     sources = retrieval_result.get("sources", [])
 

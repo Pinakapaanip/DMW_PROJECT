@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     jwt_secret: SecretStr
     jwt_algorithm: str = "HS256"
     access_token_minutes: int = 60
+    allow_dev_login: bool = False
 
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),

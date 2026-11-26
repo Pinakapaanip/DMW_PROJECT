@@ -190,7 +190,7 @@ def normalize_paper(
         paper.get("source")
     ).lower()
 
-    if source not in {"arxiv", "openalex"}:
+    if source not in {"arxiv", "openalex", "local_pdf"}:
         raise ValueError(
             f"Unsupported paper source: {source}"
         )
@@ -226,7 +226,7 @@ def normalize_paper(
         categories = paper.get("categories", [])
         topics = []
 
-    else:
+    elif source == "openalex":
         publication_date = paper.get("publication_date")
         updated_date = None
 
@@ -235,6 +235,12 @@ def normalize_paper(
 
         if not topics:
             topics = paper.get("concepts", [])
+
+    else:
+        publication_date = paper.get("publication_date")
+        updated_date = None
+        categories = []
+        topics = paper.get("topics", [])
 
     try:
         parsed_date = (
@@ -255,7 +261,7 @@ def normalize_paper(
 
     normalized_topics = sorted({
         clean_text(topic)
-        for topic in topics + categories
+        for topic in (topics or []) + (categories or [])
         if clean_text(topic)
     })
 

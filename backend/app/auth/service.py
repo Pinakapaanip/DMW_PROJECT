@@ -34,7 +34,8 @@ def register(db: Session, data):
         username=username,
         email=email,
         password_hash=hash_password(data.password),
-        full_name=data.full_name.strip()
+        full_name=data.full_name.strip(),
+        role=data.role,
     )
 
     try:
