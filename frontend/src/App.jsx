@@ -11,6 +11,7 @@ import {
   useParams,
 } from "react-router-dom";
 import { apiRequest, displayName, errorMessage, readList, recordId } from "./api.js";
+import universityMark from "./assets/chanakya-university-mark.png";
 
 const iconPaths = {
   home: <><path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9M9 20v-6h6v6" /></>,
@@ -35,6 +36,15 @@ function Icon({ name, size = 19 }) {
       stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
       {iconPaths[name]}
     </svg>
+  );
+}
+
+function UniversityBrand({ to, dark = false }) {
+  return (
+    <Link to={to} className={`university-brand ${dark ? "university-brand-dark" : ""}`} aria-label="Chanakya University">
+      <img src={universityMark} alt="" className="university-brand-mark" />
+      <span className="university-brand-copy"><strong>CHANAKYA</strong><span>UNIVERSITY</span></span>
+    </Link>
   );
 }
 
@@ -194,10 +204,7 @@ function AuthPage({ mode, auth, initialError = "" }) {
   return (
     <main className="auth-page">
       <section className="auth-story">
-        <Link to="/login" className="brand brand-on-dark">
-          <span className="brand-mark"><span /></span>
-          <span>commons<span className="brand-period">.</span></span>
-        </Link>
+        <UniversityBrand to="/login" dark />
         <div className="story-copy">
           <p className="eyebrow eyebrow-light">CHANAKYA RESEARCH COMMONS</p>
           <h1>Good research<br />moves <em>together.</em></h1>
@@ -269,47 +276,35 @@ function AppShell({ auth }) {
   ];
   return (
     <div className="app-frame">
-      <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}>
-        <Link to="/feed" className="brand">
-          <span className="brand-mark"><span /></span><span>commons<span className="brand-period">.</span></span>
-        </Link>
-        <div className="workspace-label">YOUR WORKSPACE <span>CU</span></div>
-        <nav className="main-nav" aria-label="Main navigation">
-          {links.map(({ to, icon, label }) => (
-            <NavLink key={to} to={to} onClick={() => setMenuOpen(false)} className={({ isActive }) => `nav-link ${isActive ? "nav-active" : ""}`}>
-              <Icon name={icon} /><span>{label}</span>{to === "/feed" && <span className="nav-indicator" />}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="sidebar-tip">
-            <div className="tip-icon"><Icon name="spark" size={17} /></div>
-            <strong>Ideas grow here.</strong>
-            <span>Share a question, a finding, or a fresh perspective.</span>
-            <Link to="/feed" onClick={() => setMenuOpen(false)}>Go to your feed <Icon name="arrow" size={14} /></Link>
-          </div>
-          <Link to="/profile" className="account-row">
-            <Avatar name={name} initials={initials} size="small" />
-            <span className="account-copy"><strong>{name}</strong><small>{auth.user?.role || "Community member"}</small></span>
-            <Icon name="chevron" size={16} />
+      <header className="university-header">
+        <UniversityBrand to="/feed" />
+        <div className="university-header-actions">
+          <div className="network-pill"><span className="status-dot" /> RESEARCH COMMONS</div>
+          <Link to="/profile" className="account-link" title="Your profile">
+            <Avatar name={name} initials={initials} size="tiny" />
+            <span>{name}</span>
           </Link>
           <button
             type="button"
-            className="logout-button"
+            className="logout-button header-logout"
+            aria-label="Sign out"
+            title="Sign out"
             onClick={() => auth.signOut().catch((error) => console.error("Could not revoke the session token:", error))}
           >
-            <Icon name="logout" size={16} /> Sign out
+            <Icon name="logout" size={16} /><span>Sign out</span>
           </button>
         </div>
-      </aside>
+      </header>
       <div className="main-column">
         <header className="topbar">
-          <button type="button" className="mobile-menu" aria-label="Toggle navigation" onClick={() => setMenuOpen(!menuOpen)}><Icon name="menu" /></button>
-          <div className="breadcrumb"><span>Chanakya University</span><Icon name="chevron" size={14} /><strong>Research Commons</strong></div>
-          <div className="topbar-right">
-            <div className="network-pill"><span className="status-dot" /> COMMUNITY SPACE</div>
-            <Link to="/profile" className="top-avatar" title="Your profile"><Avatar name={name} initials={initials} size="tiny" /></Link>
-          </div>
+          <button type="button" className="mobile-menu" aria-label="Toggle navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}><Icon name="menu" /> MENU</button>
+          <nav className={`main-nav ${menuOpen ? "main-nav-open" : ""}`} aria-label="Main navigation">
+            {links.map(({ to, icon, label }) => (
+              <NavLink key={to} to={to} onClick={() => setMenuOpen(false)} className={({ isActive }) => `nav-link ${isActive ? "nav-active" : ""}`}>
+                <Icon name={icon} /><span>{label}</span>
+              </NavLink>
+            ))}
+          </nav>
         </header>
         <main className="page-content"><Outlet /></main>
         <footer className="app-footer"><span>Made for people who ask better questions.</span><span>CHANAKYA RESEARCH COMMONS · 2026</span></footer>
@@ -873,7 +868,7 @@ function LoadingCard({ label }) {
 }
 
 function LoadingPage() {
-  return <main className="full-loading"><span className="brand-mark"><span /></span><span>Making space for your work…</span></main>;
+  return <main className="full-loading"><img src={universityMark} alt="" className="loading-emblem" /><span>Making space for your work…</span></main>;
 }
 
 function ErrorBanner({ message }) {
@@ -885,7 +880,7 @@ function ErrorPanel({ message, onRetry }) {
 }
 
 function NotFoundPage() {
-  return <main className="not-found"><Link to="/feed" className="brand"><span className="brand-mark"><span /></span><span>commons<span className="brand-period">.</span></span></Link><p className="eyebrow">404 · WRONG TURN</p><h1>This page is still<br /><em>being researched.</em></h1><Link to="/feed" className="button button-primary">Back to the Commons <Icon name="arrow" size={16} /></Link></main>;
+  return <main className="not-found"><UniversityBrand to="/feed" /><p className="eyebrow">404 · WRONG TURN</p><h1>This page is still<br /><em>being researched.</em></h1><Link to="/feed" className="button button-primary">Back to the Commons <Icon name="arrow" size={16} /></Link></main>;
 }
 
 function formatDate(value) {

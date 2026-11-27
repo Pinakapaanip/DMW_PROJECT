@@ -2,22 +2,22 @@
 
 :root {
   font-family: "DM Sans", sans-serif;
-  color: #202a27;
-  background: #f6f7f4;
+  color: #172f59;
+  background: #f7f8fb;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --ink: #202a27;
-  --muted: #78827d;
-  --line: #e6e9e4;
+  --ink: #172f59;
+  --muted: #68758a;
+  --line: #e1e5ed;
   --paper: #fff;
-  --canvas: #f6f7f4;
-  --forest: #244b3b;
-  --forest-deep: #173a2c;
-  --sage: #dcebe1;
-  --lime: #d8ed75;
-  --coral: #e8a08b;
+  --canvas: #f7f8fb;
+  --forest: #08295f;
+  --forest-deep: #061f49;
+  --sage: #e7edf7;
+  --lime: #c3970a;
+  --coral: #ba8068;
   --mono: "DM Mono", monospace;
-  --display: "Manrope", sans-serif;
+  --display: Georgia, "Times New Roman", serif;
 }
 
 * { box-sizing: border-box; }
@@ -26,7 +26,7 @@ button, input, textarea, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 a { color: inherit; text-decoration: none; }
-button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid #9db85c; outline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid #c3970a; outline-offset: 3px; }
 
 .app-frame { min-height: 100vh; }
 .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 20; width: 252px; display: flex; flex-direction: column; padding: 31px 21px 17px; background: #fff; border-right: 1px solid var(--line); }
@@ -402,4 +402,147 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .auth-form-wrap { padding: 5px 0 20px; }
   .auth-form-wrap h2 { font-size: 24px; }
   .auth-legal { bottom: 16px; padding-inline: 20px; font-size: 7px; }
+}
+
+/* Chanakya University navy-and-gold identity */
+.university-header {
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px clamp(24px, 8.5vw, 150px);
+  background: #fff;
+  border-top: 6px solid #414141;
+}
+.university-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  width: fit-content;
+  color: #08295f;
+}
+.university-brand-mark { width: 76px; height: 76px; flex: 0 0 auto; object-fit: contain; }
+.university-brand-copy { display: flex; flex-direction: column; color: #08295f; font-family: Georgia, "Times New Roman", serif; }
+.university-brand-copy strong { font-size: 27px; line-height: 1.05; letter-spacing: -.5px; }
+.university-brand-copy > span { margin-top: 3px; font-size: 16px; line-height: 1; letter-spacing: 4px; }
+.university-header-actions { display: flex; align-items: center; gap: 22px; }
+.university-header .network-pill { color: #08295f; font-size: 9px; }
+.university-header .status-dot { background: #c3970a; box-shadow: 0 0 0 3px #c3970a24; }
+.status-dot { background: #c3970a; box-shadow: 0 0 0 3px #c3970a24; }
+.account-link { display: inline-flex; align-items: center; gap: 9px; color: #08295f; font-size: 12px; }
+.account-link .avatar { background: #f4edda; color: #08295f; }
+.header-logout { display: inline-flex; align-items: center; justify-content: center; width: auto; padding: 8px 0; color: #08295f; font-size: 11px; }
+.header-logout:hover { color: #a77c00; }
+.main-column { margin-left: 0; }
+.topbar {
+  min-height: 58px;
+  height: auto;
+  justify-content: center;
+  padding: 0 clamp(20px, 8.5vw, 150px);
+  background: #08295f;
+  border-bottom: 3px solid #c3970a;
+}
+.main-nav { width: min(1200px, 100%); display: flex; gap: 0; margin-top: 0; }
+.nav-link {
+  min-height: 55px;
+  height: auto;
+  justify-content: center;
+  padding: 0 clamp(12px, 2vw, 29px);
+  color: #fff;
+  border-left: 1px solid #ffffff1a;
+  border-radius: 0;
+  font: 600 16px/1.2 Georgia, "Times New Roman", serif;
+  transition: background-color .18s ease, color .18s ease;
+}
+.nav-link:last-child { border-right: 1px solid #ffffff1a; }
+.nav-link svg { display: none; }
+.nav-link:hover { color: #fff; background: #123a78; }
+.nav-active { color: #fff; background: #123a78; box-shadow: inset 0 -3px #d2a719; }
+.nav-indicator { display: none; }
+.mobile-menu { color: #fff; font: 600 14px Georgia, "Times New Roman", serif; }
+.page-content { width: min(1280px, 100%); }
+.app-footer { border-color: #e1e5ed; color: #68758a; }
+.eyebrow { color: #947000; }
+.page-heading h1, .feed-intro h1, .not-found h1 { color: #08295f; }
+.page-heading h1 em, .feed-intro h1 em, .not-found h1 em { color: #b18500; }
+.button-primary { background: #08295f; box-shadow: 0 3px 8px #08295f20; }
+.button-primary:hover:not(:disabled) { background: #123a78; }
+.button-outline { color: #08295f; border-color: #cbd4e2; }
+.button-outline:hover:not(:disabled), .button-soft:hover:not(:disabled) { border-color: #c3970a; color: #08295f; }
+.button-soft { color: #08295f; background: #edf1f8; border-color: #dce4f1; }
+.avatar { background: #f4edda; color: #08295f; }
+.feed-stamp { color: #947000; border-color: #dfd3a6; }
+.feed-stamp:before { border-color: #eee6ce; }
+.tiny-sun, .tip-icon, .live-label i { color: #a77c00; }
+.live-label i { background: #c3970a; }
+.nav-active, .nav-link:focus-visible { outline-color: #d5ad30; }
+.page-description, .post-body { color: #68758a; }
+.section-title-row h2, .directory-top h2 { color: #173660; }
+.tag-row span { color: #375379; background: #f2f5fa; border-color: #dce4ef; }
+.post-action:hover, .text-link, .auth-switch a { color: #8a6800; }
+.community-art, .collection-art { color: #8b6a08; background: #f5f1e4; }
+.art-core { background: #08295f; color: #e2bd4b; }
+.rail-note { background: #f3f0e5; }
+.empty-icon { color: #8b6a08; background: #f5f1e4; }
+.spinner { border-color: #e2e7ef; border-top-color: #c3970a; }
+.success-banner { background: #f5f1e4; color: #75600e; }
+.profile-cover { background: #08295f; }
+.profile-follow .button-soft { color: #08295f; }
+.auth-story { background: #08295f; }
+.auth-story:before { border-color: #d6ad2a35; box-shadow: 0 0 0 29px #d6ad2a14, 0 0 0 58px #d6ad2a0d, 0 0 0 88px #d6ad2a08; }
+.auth-story:after { background: linear-gradient(0deg,#061f49a8,transparent); }
+.university-brand-dark .university-brand-copy { color: #fff; }
+.story-copy h1 em { color: #e2bd4b; }
+.eyebrow-light { color: #e2bd4b; }
+.orbit-art i { border-color: #e2bd4b99; }
+.orbit-art i:nth-child(3), .orbit-art b { color: #e2bd4b; background: #e2bd4b; }
+.auth-switch a { color: #8a6800; }
+.loading-emblem { width: 32px; height: 32px; object-fit: contain; animation: pulse 1.5s ease-in-out infinite; }
+.not-found .university-brand { margin-bottom: 60px; }
+
+@media (max-width: 850px) {
+  .university-header { min-height: 92px; padding-inline: 24px; }
+  .university-brand-mark { width: 60px; height: 60px; }
+  .university-brand-copy strong { font-size: 22px; }
+  .university-brand-copy > span { font-size: 13px; letter-spacing: 3.5px; }
+  .university-header-actions { gap: 13px; }
+  .university-header .network-pill { display: none; }
+  .topbar { padding-inline: 20px; }
+  .main-nav { justify-content: center; margin-top: 0; }
+  .nav-link { padding-inline: 14px; font-size: 14px; }
+}
+
+@media (max-width: 620px) {
+  .university-header { min-height: 78px; padding: 9px 16px; border-top-width: 4px; }
+  .university-brand { gap: 8px; }
+  .university-brand-mark { width: 48px; height: 48px; }
+  .university-brand-copy strong { font-size: 17px; }
+  .university-brand-copy > span { margin-top: 2px; font-size: 10px; letter-spacing: 3px; }
+  .university-header-actions { gap: 10px; }
+  .account-link { gap: 0; }
+  .account-link > span { display: none; }
+  .header-logout { padding: 7px; }
+  .header-logout > span { display: none; }
+  .topbar { min-height: 0; display: flex; flex-direction: column; align-items: stretch; padding: 0 16px; }
+  .mobile-menu { display: flex; min-height: 48px; align-items: center; justify-content: space-between; width: 100%; padding: 0 2px; }
+  .mobile-menu svg { order: 2; }
+  .main-nav { display: none; width: 100%; flex-direction: column; align-items: stretch; margin-top: 0; }
+  .main-nav.main-nav-open { display: flex; }
+  .nav-link, .nav-link:last-child {
+    min-height: 48px;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0 6px;
+    border: 0;
+    border-top: 1px solid #ffffff24;
+    font-size: 15px;
+  }
+  .nav-link svg { display: block; }
+  .nav-active { box-shadow: inset 3px 0 #d5ad30; }
+  .not-found .university-brand { margin-bottom: 45px; }
+  .auth-story { padding: 20px 24px; }
+  .auth-story .university-brand-mark { width: 42px; height: 42px; }
+  .auth-story .university-brand-copy strong { font-size: 16px; }
+  .auth-story .university-brand-copy > span { font-size: 9px; letter-spacing: 2.5px; }
 }
